@@ -1,7 +1,7 @@
 # 🎮 Ft_Transcendence: Pong Challenge 🏓
 
 ## 🌟 Project Overview
-![Project Image](images/game.png)
+![Project Image](game.png)
 **Ft_Transcendence** 🏆 is a web platform for Pong enthusiasts. Featuring a multiplayer Pong game, user authentication 🔒, chat functionality 💬, and real-time gameplay ⚡.
 
 ## 🛠️ Tech Stack
