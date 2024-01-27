@@ -1,0 +1,189 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  createdAt DateTime @default(now())
+  id        String   @id @unique @default(uuid())
+
+  fyId Int @unique
+
+  username String @unique
+  login    String @unique
+  picUrl   String @default("https://img.freepik.com/free-vector/illustration-businessman_53876-5856.jpg?w=740&t=st=1702312039~exp=1702312639~hmac=0d3674ad8916b34057eafe737fef7b896279e513b51bb451c3958252f8b72c52")
+  email    String @unique
+
+  status String @default("offline") // offline, online, playing
+
+  twofactor                     Boolean @default(false)
+  twoFactorAuthenticationSecret String  @default("")
+  twofactorState                String  @default("")
+
+  Wins   Int @default(0) //update on game end
+  Losses Int @default(0) //update on game end
+  score  Int @default(0) //update on level up
+
+  xp Int @default(0)
+
+  sendfriendrequest    friendrequest[] @relation("sendfriendrequest")
+  receivefriendrequest friendrequest[] @relation("receivefriendrequest")
+
+  sendDirectMessage    directMessage[] @relation("sendDirectMessage")
+  receiveDirectMessage directMessage[] @relation("receiveDirectMessage")
+
+  currentGameCreated currentGame[] @relation("currentGameCreated")
+  currentGameInvited currentGame[] @relation("currentGameInvited")
+
+  inviteGameCreated inviteGame[] @relation("inviteGameCreated")
+  inviteGameInvited inviteGame[] @relation("inviteGameInvited")
+
+  membership membership[]
+  message    message[]
+
+  winner game[] @relation("winner")
+  loser  game[] @relation("loser")
+}
+
+model friendrequest {
+  id        String   @id @unique @default(uuid())
+  createdAt DateTime @default(now())
+
+  sender   User   @relation("sendfriendrequest", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId String
+
+  receiver   User   @relation("receivefriendrequest", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId String
+
+  status String @default("pending") // pending, accepted, declined, blocked
+
+  @@unique([senderId, receiverId])
+}
+
+model membership {
+  id String @id @default(uuid())
+
+  uid  String
+  user User   @relation(fields: [uid], references: [id], onDelete: Cascade)
+
+  rid  String
+  room room   @relation(fields: [rid], references: [id], onDelete: Cascade)
+
+  is_owner Boolean @default(false)
+  is_admin Boolean @default(false)
+
+  is_banned Boolean @default(false)
+
+  is_muted Boolean   @default(false)
+  mute_at  DateTime?
+  duration DateTime?
+
+  is_invite Boolean @default(false)
+
+  @@unique([uid, rid])
+}
+
+model room {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String @unique
+
+  type     String @default("public") // private, public, protected
+  password String @default("")
+
+  messages   message[]
+  membership membership[]
+}
+
+model message {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  User   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  room   room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId String
+
+  msg String
+
+  type String @default("msg") //msg, game
+
+  inviteGame inviteGame? @relation
+}
+
+model directMessage {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  sender   User   @relation("sendDirectMessage", fields: [senderId], references: [id], onDelete: Cascade)
+  senderId String
+
+  receiver   User   @relation("receiveDirectMessage", fields: [receiverId], references: [id], onDelete: Cascade)
+  receiverId String
+
+  msg String
+
+  type String @default("msg") // msg, game
+
+  inviteGame inviteGame? @relation
+}
+
+model currentGame {
+  id        String   @id @unique @default(uuid())
+  createdAt DateTime @default(now())
+
+  creater      User   @relation("currentGameCreated", fields: [createrId], references: [id], onDelete: Cascade)
+  createrId    String
+  createrScore Int    @default(0)
+
+  invited      User?   @relation("currentGameInvited", fields: [invitedId], references: [id], onDelete: Cascade)
+  invitedId    String?
+  invitedScore Int     @default(0)
+
+  winScore Int @default(10)
+}
+
+model game {
+  id        String   @id @unique @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  winner      User   @relation("winner", fields: [winnerId], references: [id], onDelete: Cascade)
+  winnerId    String
+  winnerScore Int    @default(0)
+
+  loser      User   @relation("loser", fields: [loserId], references: [id], onDelete: Cascade)
+  loserId    String
+  loserScore Int    @default(0)
+}
+
+model inviteGame {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  creater       User    @relation("inviteGameCreated", fields: [createrId], references: [id], onDelete: Cascade)
+  createrId     String
+  createrJoined Boolean @default(false)
+
+  invited       User?   @relation("inviteGameInvited", fields: [invitedId], references: [id], onDelete: Cascade)
+  invitedId     String?
+  invitedJoined Boolean @default(false)
+
+  // Relation to directMessage
+  directMessage   directMessage? @relation(fields: [directMessageId], references: [id], onDelete: Cascade)
+  directMessageId String?        @unique
+
+  // Relation to message
+  message   message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String?  @unique
+}
