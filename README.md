@@ -31,5 +31,5 @@
 
 ### Running the Project
 - **Makefile**: Use the Makefile to build, run, stop, and delete containers.
-- Commands include `make build`, `make run`, `make stop`, and `make down`.
+- Commands include `make`, `make stop`, and `make fclean`.
 
